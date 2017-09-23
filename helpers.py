@@ -7,12 +7,43 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datascope.settings.development"
 
 import socket
 import json
-from random import randint
+from random import randint, shuffle
+from faceplusplus_analysis import compareface
 
 
-
-SOCKET_SERVER_ADDRESS = ('192.168.1.40', 8001)
+SOCKET_SERVER_ADDRESS = ('192.168.43.133', 8001)
 SOCKET_LOCAL_ADDRESS = ('0.0.0.0', 8002)
+
+
+class Roaster(object):
+
+    _roasts = {}
+    _comments = None
+
+    def load_roasts(self, post_id):
+
+        if not self._comments:
+            from trolls.models.community import RedditScrapeCommunity
+            community = RedditScrapeCommunity.objects.get_latest_by_signature("RoastMe")
+            data = community.get_growth("comments")
+            self._comments = data.output.individual_set
+
+        self._roasts[post_id] = list(self._comments.filter(identity=post_id).order_by('created_at')[:10])
+        shuffle(self._roasts[post_id])
+        #self._roasts[post_id] = sorted(self._comments.filter(identity=post_id).all(), key=lambda comment: int(comment["author_score"]))[:3]
+
+    def get_roast(self, post_id):
+        if post_id not in self._roasts:
+            self.load_roasts(post_id)
+            return self.get_roast(post_id)
+
+        roast = self._roasts[post_id].pop()
+        if not len(self._roasts[post_id]):
+            del self._roasts[post_id]
+        return roast
+
+
+roaster = Roaster()
 
 
 def send_action(action, payload):
@@ -62,7 +93,8 @@ def get_matching_comment(opencv_face):
         print("File name not found in posts: " + file_name)
         return get_random_comment()
 
-    closest_comment = comments.filter(identity=closest_post["id"]).order_by('?').first()
+    #closest_comment = comments.filter(identity=closest_post["id"]).order_by('?').first()
+    closest_comment = roaster.get_roast(closest_post["id"])
 
     print('Closest post id={} comments={} '.format(closest_post["id"], closest_post["details_link"]))
     print('Closest comment id={}'.format(closest_comment["id"]))
