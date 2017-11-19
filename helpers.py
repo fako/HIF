@@ -1,7 +1,8 @@
 print('working')
 
+import datascope.bootstrap as configuration
 import sys, os
-sys.path.append("/home/fako/Datascope/datascope")
+sys.path.append(configuration.PATH_TO_PROJECT)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datascope.settings")
 
 import socket
@@ -15,7 +16,7 @@ import django
 from django.core.files.storage import default_storage
 
 
-SOCKET_SERVER_ADDRESS = ('192.168.43.133', 8001)
+SOCKET_SERVER_ADDRESS = (configuration.SERVER_IP, 8001)
 SOCKET_LOCAL_ADDRESS = ('0.0.0.0', 8002)
 
 
@@ -106,7 +107,11 @@ def get_matching_comment(opencv_face):
     print(closest_comment["comment"])
     print('-' * 80)
     pil_image = Image.fromarray(opencv_face)
-    pil_image.save("/home/fako/Datascope/datascope/system/files/media/mugs/{}.{}.jpg".format(closest_post["details_link"].replace('/','+'),time()))
+    pil_image.save("{}system/files/media/mugs/{}.{}.jpg".format(
+        configuration.PATH_TO_PROJECT,
+        closest_post["details_link"].replace('/','+'),
+        time()
+    ))
     return closest_comment["comment"]
 
 

@@ -9,7 +9,7 @@ from PIL import Image
 
 from helpers import send_face_detected
 from faceplusplus_analysis import compareface
-
+import datascope.bootstrap as configuration
 
 
 def sourceImagePaths(directory):
@@ -62,9 +62,10 @@ if __name__ == '__main__':
     import django
     django.setup()
 
-    face_cascade = cv2.CascadeClassifier('/home/fako/opencv-3.1.0/data/haarcascades/haarcascade_frontalface_default.xml')
+    face_cascade = cv2.CascadeClassifier(configuration.PATH_TO_OPENCV +
+                                         'data/haarcascades/haarcascade_frontalface_default.xml')
     while True:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(configuration.VIDEO_DEVICE)
         time.sleep(2)
         ret, img = cap.read()
         cap.release()
