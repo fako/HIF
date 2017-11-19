@@ -14,8 +14,18 @@ You'll need to install opencv into your conda by activating the environment and 
 conda install -c menpo opencv
 ```
 
-You'll also need to download and unzip the relevant opencv.zip. 
+Downloads
+---------
+
+You'll need to download and unzip a special opencv.zip file. 
 There is a XML training file that needs to be read from there.
+
+You'll also need to download the trolls.sql data and load it into the database. 
+Use the following command and specify the user and password if needed with your setup.
+
+```bash
+cat trolls.sql | mysql datascope
+```
 
 Configuration
 -------------
