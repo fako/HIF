@@ -28,8 +28,9 @@ Installation
 ------------
 
 After cloning this repo to the machine you want to install Data Scope on. 
-Activate the environment where you want to install Data Scope into. 
-Then go into the repo directory and run the following for a local install.
+Activate the environment where you want to install Data Scope into.
+ You should create a new [Miniconda](https://conda.io/miniconda.html) environment if this is a new installation.
+After activating your environment go into the repo directory and run the following for a local install.
 
 ```bash
 cp datascope/environments/local_bootstrap.py datascope/bootstrap.py

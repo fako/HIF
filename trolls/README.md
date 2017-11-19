@@ -7,7 +7,7 @@ Insulting people on the internet!
 Installation
 ------------
 
-Your environment should be setup with [minicoda](https://conda.io/miniconda.html).
+Your environment should be setup with [Miniconda](https://conda.io/miniconda.html).
 You'll need to install opencv into your conda by activating the environment and then running
 
 ```bash
