@@ -4,6 +4,7 @@ import os
 #import config
 import sys
 import pprint
+from PIL import Image
 #from tqdm import tqdm
 
 from helpers import send_face_detected
@@ -63,7 +64,7 @@ if __name__ == '__main__':
 
     face_cascade = cv2.CascadeClassifier('/home/fako/opencv-3.1.0/data/haarcascades/haarcascade_frontalface_default.xml')
     while True:
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
         time.sleep(2)
         ret, img = cap.read()
         cap.release()
@@ -77,6 +78,7 @@ if __name__ == '__main__':
             if w >= 80 and h >= 80:
                 opencv_face = img[y:y+h,x:x+w]
                 send_face_detected(opencv_face)
+
 #     img = cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 #     # roi_gray = gray[y:y+h, x:x+w]
 #     # roi_color = img[y:y+h, x:x+w]

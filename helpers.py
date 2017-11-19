@@ -1,14 +1,18 @@
 print('working')
 
 import sys, os
-sys.path.append("/Users/fako/Datascope/datascope")
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datascope.settings.development")
-
+sys.path.append("/home/fako/Datascope/datascope")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "datascope.settings")
 
 import socket
 import json
 from random import randint, shuffle
 from faceplusplus_analysis import compareface
+from PIL import Image
+from time import time
+
+import django
+from django.core.files.storage import default_storage
 
 
 SOCKET_SERVER_ADDRESS = ('192.168.43.133', 8001)
@@ -100,6 +104,9 @@ def get_matching_comment(opencv_face):
     print('Closest comment id={}'.format(closest_comment["id"]))
     print('-' * 80)
     print(closest_comment["comment"])
+    print('-' * 80)
+    pil_image = Image.fromarray(opencv_face)
+    pil_image.save("/home/fako/Datascope/datascope/system/files/media/mugs/{}.{}.jpg".format(closest_post["details_link"].replace('/','+'),time()))
     return closest_comment["comment"]
 
 
