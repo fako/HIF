@@ -16,7 +16,7 @@ import django
 from django.core.files.storage import default_storage
 
 
-SOCKET_SERVER_ADDRESS = (configuration.SERVER_IP, 8001)
+SOCKET_SERVER_ADDRESS = (configuration.ROBOTS_IP, 8001)
 SOCKET_LOCAL_ADDRESS = ('0.0.0.0', 8002)
 
 
