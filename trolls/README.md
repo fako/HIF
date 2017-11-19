@@ -35,3 +35,13 @@ There are a few variables in bootstrap.py that you need to set correctly
 * ```PATH_TO_OPENCV``` should point to the path of the unzipped opencv.zip
 * ```SERVER_IP``` should be an IP where the computer controlling the robots is listening
 * ```VIDEO_DEVICE``` should be the video interface number that the webcam is connected to
+
+Running
+-------
+
+If the installation and loading of the data went well everything should work with the following command.
+Do not forget to activate your Conda environment every time.
+
+```bash
+python opencv.py
+```
