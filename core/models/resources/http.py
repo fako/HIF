@@ -169,14 +169,16 @@ class HttpResource(Resource):
         headers = requests.utils.default_headers()
         headers["User-Agent"] = "{}; {}".format(self.config.user_agent, headers["User-Agent"])
         headers.update(self.headers())
-        return self.validate_request({
+        request = {
             "args": args,
             "kwargs": kwargs,
             "method": method,
             "url": self._create_url(*args),
-            "headers": dict(headers),
-            "data": data,
-        }, validate_input=False)
+            "headers": dict(headers)
+        }
+        data_key = "json" if headers.get("Content-Type") == "application/json" else "data"
+        request[data_key] = data
+        return self.validate_request(request, validate_input=False)
 
     def _create_url(self, *args):
         url_template = copy(self.URI_TEMPLATE)
@@ -325,12 +327,15 @@ class HttpResource(Resource):
             "Trying to make request before having a valid request dictionary."
 
         method = self.request.get("method")
-        data = self.request.get("data") if not method == "get" else None
+        form_data = self.request.get("data") if not method == "get" else None
+        json_data = self.request.get("json") if not method == "get" else None
+
         request = requests.Request(
             method=method,
             url=self.request.get("url"),
             headers=self.request.get("headers"),
-            data=data
+            data=form_data,
+            json=json_data
         )
         preq = self.session.prepare_request(request)
 
@@ -378,7 +383,7 @@ class HttpResource(Resource):
 
     def __init__(self, *args, **kwargs):
         self.session = kwargs.pop("session", requests.Session())
-        self.timeout = kwargs.pop("timeout", 30)  # TODO: test this
+        self.timeout = kwargs.pop("timeout", 30)
         super(HttpResource, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -388,9 +393,9 @@ class HttpResource(Resource):
         if self.request and not self.data_hash:
             uri_request = self.request_without_auth()
             self.data_hash = HttpResource.hash_from_data(uri_request.get("data"))
-        if len(self.uri) > 255:  # TODO: test this
+        if len(self.uri):
             self.uri = self.uri[:255]
-        if not self.id and self.config.purge_immediately:  # TODO: test this
+        if not self.id and self.config.purge_immediately:
             self.purge_at = datetime.now()
 
     #######################################################
@@ -414,7 +419,7 @@ class HttpResource(Resource):
         hsh.update(hash_data)
         return hsh.hexdigest()
 
-    def set_error(self, status, connection_error=False):  # TODO: test
+    def set_error(self, status, connection_error=False):
         if connection_error:
             self.head = {}
             self.body = ""

@@ -21,6 +21,10 @@ class HttpResourceTestMixin(TestCase):
         self.instance = self.get_test_instance()
         self.test_data = {"data": "test"}
 
+    def tearDown(self):
+        if "Content-Type" in self.instance.HEADERS:
+            del self.instance.HEADERS["Content-Type"]
+
     @staticmethod
     def get_test_instance():
         raise NotImplementedError()
@@ -118,6 +122,39 @@ class HttpResourceTestMixin(TestCase):
         self.assertIsNotNone(self.instance.body)
         self.assertIsNotNone(self.instance.status)
 
+    def test_send_request_post_json(self):
+        test_url = "http://localhost:8000/test/"
+        test_data = {"test": "test"}
+        content_header = {
+            "Accept": "application/json",
+            "Content-Length": "16",
+            "Content-Type": "application/json",
+            "Connection": "keep-alive",
+            "Accept-Encoding": "gzip, deflate"
+        }
+        self.instance.request = {
+            "args": tuple(),
+            "kwargs": {},
+            "method": "post",
+            "url": test_url,
+            "headers": content_header,
+            "json": test_data,
+        }
+        self.instance._send()
+        # See if request was made properly
+        args, kwargs = self.instance.session.send.call_args
+        preq = args[0]
+        user_agent_header = preq.headers.pop("User-Agent", None)
+        if user_agent_header is None:
+            self.fail("No default User-Agent present on the request")
+        self.assertEqual(preq.url, test_url)
+        self.assertEqual(preq.headers, content_header)
+        self.assertEqual(preq.body, json.dumps(test_data).encode("utf-8"))
+        # Make sure that response fields are set to something and do not remain None
+        self.assertIsNotNone(self.instance.head)
+        self.assertIsNotNone(self.instance.body)
+        self.assertIsNotNone(self.instance.status)
+
     def test_send_request_wrong(self):
         self.instance.request = None
         try:
@@ -125,6 +162,13 @@ class HttpResourceTestMixin(TestCase):
             self.fail("_send should fail when self.request is not set.")
         except AssertionError:
             pass
+
+    def test_create_request_post(self):
+        request = self.instance._create_request("post", "en", "test", query="test")
+        self.assertEqual(request["data"], {"test": "test"})
+        self.instance.HEADERS["Content-Type"] = "application/json"
+        request = self.instance._create_request("post", "en", "test", query="test")
+        self.assertEqual(request["json"], {"test": "test"})
 
     def test_success(self):
         success_range = range(200, 209)
@@ -176,6 +220,16 @@ class HttpResourceTestMixin(TestCase):
         self.test_data["data"] = "tezt"
         data_hash2 = HttpResource.hash_from_data(self.test_data)
         self.assertNotEqual(data_hash, data_hash2)
+
+    def test_set_error(self):
+        self.instance.set_error(404)
+        self.assertEqual(self.instance.head, {})
+        self.assertIsNone(self.instance.body)
+        self.assertEqual(self.instance.status, 404)
+        self.instance.set_error(0, True)
+        self.assertEqual(self.instance.head, {})
+        self.assertEqual(self.instance.body, "")
+        self.assertEqual(self.instance.status, 0)
 
 
 class ConfigurationFieldTestMixin(TestCase):
@@ -282,6 +336,12 @@ class TestHttpResourceMock(HttpResourceTestMixin, ConfigurationFieldTestMixin):
             "Accept-Encoding": "gzip, deflate"
         })
         self.assertEqual(preq.body, expected_body)
+
+    def test_init(self):
+        mock = HttpResourceMock()
+        self.assertEqual(mock.timeout, 30)
+        mock = HttpResourceMock(timeout=20)
+        self.assertEqual(mock.timeout, 20)
 
     def test_get_new(self):
         # Make a new request and store it.
@@ -540,12 +600,31 @@ class TestHttpResourceMock(HttpResourceTestMixin, ConfigurationFieldTestMixin):
         self.instance.clean()
         self.assertEqual(self.instance.uri, "localhost:8000/en/?q=test")
         self.assertEqual(self.instance.data_hash, "")
+        self.assertIsNone(self.instance.purge_at)
 
     def test_clean_post(self):
         self.instance.request = self.test_post_request
         self.instance.clean()
         self.assertEqual(self.instance.uri, "localhost:8000/en/?q=test")
         self.assertEqual(self.instance.data_hash, "31ead60c9066eefb8011f3f68aed25d004d60957")
+        self.assertIsNone(self.instance.purge_at)
+
+    def test_clean_long_uri(self):
+        self.instance.request = self.test_get_request
+        self.instance.clean()
+        self.instance.uri += "*" * 255
+        self.instance.clean()
+        self.assertEqual(self.instance.uri, "localhost:8000/en/?q=test" + "*" * 230)
+
+    def test_clean_immediate_purge(self):
+        self.instance.request = self.test_get_request
+        self.instance.config = {"purge_immediately": True}
+        self.instance.id = 1
+        self.instance.clean()
+        self.assertIsNone(self.instance.purge_at)
+        self.instance.id = None
+        self.instance.clean()
+        self.assertIsNotNone(self.instance.purge_at)
 
     def test_meta(self):
         instance = self.model()
