@@ -2,6 +2,8 @@ SECRET_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 GOOGLE_API_KEY = ''
 INDICO_API_KEY = ''
+FACEPLUSPLUS_PUBLIC_KEY = ''
+FACEPLUSPLUS_PRIVATE_KEY = ''
 RAVEN_DSN = ''
 
 EMAIL_HOST_USER = ''
